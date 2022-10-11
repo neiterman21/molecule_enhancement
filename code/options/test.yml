@@ -1,0 +1,37 @@
+name: blur_th129
+suffix: ~  # add suffix to saved images
+save_images: True
+model: video_base
+distortion: sr
+scale: 1
+crop_border: ~  # crop border when evaluation. If None(~), crop the scale pixels
+gpu_ids: ~
+
+datasets:
+
+  test1:  # the 1st test dataset
+    name: 1video
+    mode: blur
+    data_type: mrcs
+    dataroot: /data/EMPIAR-10028/molecule/
+
+  # test_3:  # the 1st test dataset
+  #   name: on8
+  #   mode: cel
+  #   debug: false
+  #   debug_set_size: 5
+  #   alpha: 2
+  #   ratio: 80
+
+  #   dataroot_HQ: /home/evgenyn/exposute_dataset/testset_extra_exposures/exp8/
+  #   dataroot_LQ: /home/evgenyn/exposute_dataset/testset_extra_exposures/exp01/
+
+
+#### network structures
+network_G:
+  which_model_G: blur #HyperNet
+
+#### path
+path:
+  #pretrain_model_G: experiments/CEL_tune_curv/models/latest_G.pth
+  pretrain_model_G: ~ #/home/evgenyn/hypernet/dce_curv/exposure_metanet/experiments/CEL_tune_extraoulation_/models/latest_G.pth
