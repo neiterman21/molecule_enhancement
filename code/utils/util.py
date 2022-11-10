@@ -146,11 +146,11 @@ def tensor2img(tensor, out_type=np.float32, min_max=(0, 1)):
 
 
 def save_img(img, img_path, mode='RGB',use_PIL=True):
-    print(img_path)
     if use_PIL:
         from PIL import Image
         Image.fromarray(img).save(img_path)
     else:
+        print("saving: " ,img_path , img.shape)
         cv2.imwrite(img_path, img)
 
 def DUF_downsample(x, scale=4):
@@ -337,3 +337,33 @@ class ProgressBar(object):
             sys.stdout.write('completed: {}, elapsed: {}s, {:.1f} tasks/s'.format(
                 self.completed, int(elapsed + 0.5), fps))
         sys.stdout.flush()
+
+###################
+####blob detector##
+###################
+def set_params():
+    params = cv2.SimpleBlobDetector_Params()
+
+    #change threasholds
+    params.minThreshold = 50
+    params.maxThreshold = 2000
+
+    #filter by area
+    params.filterByArea = True
+    params.minArea = 2000
+    params.maxArea = 20000
+
+    params.filterByCircularity = False
+    params.filterByConvexity = False
+
+    return params
+
+def create_blob_detector():
+    params = set_params()
+    return cv2.SimpleBlobDetector_create(params)
+
+def draw_keypoints(keypoints,avg_img):
+    avg_img = cv2.cvtColor(avg_img,cv2.COLOR_GRAY2RGB)
+    for c in keypoints:
+        avg_img = cv2.circle(avg_img, np.array(c.pt).astype(np.uint32),15 , (0,0,255) , 15)
+    return avg_img

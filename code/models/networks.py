@@ -11,7 +11,7 @@ def define_G(opt):
     if which_model == 'MSRResNet':
         netG = blur_model.BlurModel()
     elif which_model == 'blur':
-        netG = blur_model.BlurModel()
+        netG = blur_model.BlurModel(opt_net)
     else:
         raise NotImplementedError('Generator model [{:s}] not recognized'.format(which_model))
 

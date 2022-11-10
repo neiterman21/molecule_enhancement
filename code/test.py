@@ -41,28 +41,36 @@ for test_loader in test_loaders:
     dataset_dir = osp.join(opt['path']['results_root'], test_set_name)
     util.mkdir(dataset_dir)
 
+#creat blob detection
+detector = util.create_blob_detector()
 for data in test_loader:
     model.feed_data(data)
 
+    logger.info('\Running [{:s}]...'.format(data['name'][0]))
     model.test()
     visuals = model.get_current_visuals()
 
     sr_img = util.tensor2img(visuals['rlt'])  # uint8
     # save images
-    avg_img = (data['avg'].cpu().data.numpy()*255).astype('uint8')
+    #print("printing!!!" , dataset_dir,data['name'][])
+    image_dir = osp.join(dataset_dir, data['name'][0])
+    util.mkdir(image_dir)
+    avg_img = (data['avg'].cpu().data.numpy()*255*2).astype('uint8')[0]
     avg_post = np.zeros_like(avg_img)
-    print(avg_img.shape)
-    util.save_img(avg_img[0], osp.join(dataset_dir, 'avg.jpg'))
+    
+    util.save_img(avg_img, osp.join(image_dir, 'avg.jpg'))
     for i , im in enumerate(sr_img):
         suffix = opt['suffix']
         if suffix:
-            save_img_path = osp.join(dataset_dir, str(i) + suffix + '.jpg')
+            save_img_path = osp.join(image_dir, str(i) + suffix + '.jpg')
         else:
-            save_img_path = osp.join(dataset_dir, str(i) + '.jpg')
+            save_img_path = osp.join(image_dir, str(i) + '.jpg')
         
             # Save SR images for reference
             sr_img_ = (sr_img[i]*255).astype('uint8')
-            util.save_img(sr_img_, save_img_path)
-            avg_post += sr_img_
-    avg_post /= len(sr_img)
-    util.save_img(avg_post, osp.join(dataset_dir, 'avg_post.jpg'))
+            keypoints = detector.detect(sr_img_)
+            sr_img_ = util.draw_keypoints(keypoints,avg_img)
+            util.save_img(sr_img_, save_img_path,use_PIL=False)
+            #avg_post += sr_img_
+    #avg_post /= len(sr_img)
+    #util.save_img(avg_post, osp.join(image_dir, 'avg_post.jpg'))

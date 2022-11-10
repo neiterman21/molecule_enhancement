@@ -9,7 +9,9 @@ class MoleculeBlurDataset(data.Dataset):
         super(MoleculeBlurDataset, self).__init__()
         self.opt = opt
         self.paths = util.get_image_paths( opt['dataroot'],opt['data_type'])
-        print(self.paths)
+        if (opt['debug']):
+            self.paths = self.paths[:5]
+        #print(self.paths)
 
     def __len__(self):
         return len(self.paths)
@@ -18,4 +20,5 @@ class MoleculeBlurDataset(data.Dataset):
         with mrcfile.open(self.paths[index]) as mrc:
             d = mrc.data/16383
         avg = np.average(d, axis=(0))
-        return {'video' : d, 'avg' : avg}
+        name = self.paths[index].split('/')[-1].split('.')[0]
+        return {'video' : d, 'avg' : avg, 'name' : name}
