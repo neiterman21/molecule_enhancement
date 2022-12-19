@@ -8,6 +8,7 @@ import utils.util as util
 
 import options.options as option
 from data import create_dataset, create_dataloader
+from data.util import moleculeCoords
 from models import create_model
 
 import numpy as np
@@ -43,13 +44,16 @@ for test_loader in test_loaders:
 
 #creat blob detection
 detector = util.create_blob_detector()
+hit = 0
+mis = 0
+fp = 0
 for data in test_loader:
     model.feed_data(data)
 
     logger.info('\Running [{:s}]...'.format(data['name'][0]))
     model.test()
     visuals = model.get_current_visuals()
-
+    
     sr_img = util.tensor2img(visuals['rlt'])  # uint8
     # save images
     #print("printing!!!" , dataset_dir,data['name'][])
@@ -59,6 +63,11 @@ for data in test_loader:
     avg_post = np.zeros_like(avg_img)
     
     util.save_img(avg_img, osp.join(image_dir, 'avg.jpg'))
+    video_hit = 0
+    video_mis = 0
+    video_fp = 0  
+    gt = moleculeCoords(spamreader = data['GT'])
+    from_all = moleculeCoords()
     for i , im in enumerate(sr_img):
         suffix = opt['suffix']
         if suffix:
@@ -69,8 +78,36 @@ for data in test_loader:
             # Save SR images for reference
             sr_img_ = (sr_img[i]*255).astype('uint8')
             keypoints = detector.detect(sr_img_)
-            sr_img_ = util.draw_keypoints(keypoints,avg_img)
+            #coords = moleculeCoords(kp=keypoints)
+            coords = visuals['coords'][i]
+            from_all.merge(coords)
+            score = coords.res_matrix(gt)
+            #logger.info(score)
+
+            video_hit += score['hit']
+            video_mis += score['miss']
+            video_fp += score['fp']
+            if opt['save_binary']:
+                sr_img_ = util.draw_keypoints(keypoints,sr_img_)
+            else:
+                sr_img_ = util.draw_keypoints(keypoints,avg_img)
+            sr_img_ = util.draw_keypoints2(data['GT'],sr_img_)
+            
             util.save_img(sr_img_, save_img_path,use_PIL=False)
             #avg_post += sr_img_
+    #logger.info('\ rates: hit [{:s}] miss [{:s}] fp [{:s}]...'.format(str(video_hit/(video_hit+video_mis)),str(video_mis/(video_hit+video_mis)),str(video_fp/(video_hit+video_mis))))
+    #stats taken from all frames
+    score_all = from_all.res_matrix(gt)
+    logger.info('from all \hit [{:d}] miss [{:d}] fp [{:d}]...'.format(score_all['hit'],score_all['miss'],score_all['fp']))
+    logger.info('from all \ rates: hit [{:.3f}] miss [{:.3f}] fp [{:.3f}]...'.format(score_all['hit']/(score_all['hit']+score_all['miss']),score_all['miss']/(score_all['hit']+score_all['miss']),score_all['fp']/(score_all['hit']+score_all['miss'])))
+    hit += score_all['hit']
+    mis += score_all['miss']
+    fp += score_all['fp']
+    sr_img_ = util.draw_keypoints2(from_all.to_numpy(),avg_img,color=(0,0,255),size=20)
+    sr_img_ = util.draw_keypoints2(data['GT'],sr_img_)
+    util.save_img(sr_img_, osp.join(image_dir, 'from_all.jpg'),use_PIL=False)
+    #######
+logger.info('Total hit [{:d}] miss [{:d}] fp [{:d}]...'.format(hit,mis,fp))
+logger.info('Total rates: hit [{:.3f}] miss [{:.3f}] fp [{:.3f}]...'.format(hit/(hit+mis),mis/(hit+mis),fp/(hit+mis)))
     #avg_post /= len(sr_img)
     #util.save_img(avg_post, osp.join(image_dir, 'avg_post.jpg'))

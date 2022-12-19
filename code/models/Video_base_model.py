@@ -140,7 +140,8 @@ class VideoBaseModel(BaseModel):
     def get_current_visuals(self, need_GT=False):
         out_dict = OrderedDict()
         out_dict['LQ'] = self.var_L.detach()[0].float().cpu()
-        out_dict['rlt'] = self.fake_H.detach()[0].float().cpu()
+        out_dict['rlt'] = self.fake_H[0].detach()[0].float().cpu()
+        out_dict['coords'] = self.fake_H[1]
         if need_GT:
             out_dict['GT'] = self.real_H.detach()[0].float().cpu()
         return out_dict

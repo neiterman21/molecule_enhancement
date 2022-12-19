@@ -1,4 +1,4 @@
-name: blur_falcon_avg
+name: test_10028_avg_strict_debug
 suffix: ~  # add suffix to saved images
 save_images: True
 model: video_base
@@ -6,20 +6,20 @@ distortion: sr
 save_binary: False
 scale: 1
 crop_border: ~  # crop border when evaluation. If None(~), crop the scale pixels
-gpu_ids: [0]
+gpu_ids: [2]
 
 datasets:
 
   test1:  # the 1st test dataset
     name: 1video
     mode: blur
-    data_type: mrc
-    cord_type: coord
+    data_type: mrcs
+    cord_type: star
     #dataroot: /home/evgenyn/scratch/Micrographs_part1/
-    dataroot: /home/evgenyn/scratch/micro_cord/ftp.empiar.pdbj.org/archive/10017/data/
+    dataroot: /home/evgenyn/scratch/micro_cord/ftp.empiar.pdbj.org/archive/10028/data/Micrographs/Micrographs_part1/
     batch_size: 1
     debug: True
-    debug_imgs: 8
+    debug_imgs: 5
 
   # test_3:  # the 1st test dataset
   #   name: on8
@@ -36,15 +36,17 @@ datasets:
 #### network structures
 network_G:
   which_model_G: blur #HyperNet
-  conv_size: 50
+  conv_size: 101
   th1: 0.1305 # double 0-1
   patch_mean: 0.82
-  morphology_size: 13 
+  morphology_size: 41 
   gauss_blur_size: 25
   sqrt_frags: 8
+
   #blob detection
-  minArea: 2000
+  minArea: 6000
   minThreshold: 50
+  voting_th: 5
 
 
 #### path

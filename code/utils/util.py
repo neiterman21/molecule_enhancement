@@ -132,6 +132,7 @@ def tensor2img(tensor, out_type=np.float32, min_max=(0, 1)):
     elif n_dim == 3:
         img_np = tensor.permute(1,2,0).cpu().data.numpy()
         img_np = np.minimum(np.maximum(img_np,0),1)
+        return np.expand_dims(img_np.astype(out_type),axis=0)
         #img_np = np.transpose(img_np[[2, 1, 0], :, :], (1, 2, 0))  # HWC, BGR
 
     elif n_dim == 2:
@@ -150,7 +151,7 @@ def save_img(img, img_path, mode='RGB',use_PIL=True):
         from PIL import Image
         Image.fromarray(img).save(img_path)
     else:
-        print("saving: " ,img_path , img.shape)
+        #print("saving: " ,img_path , img.shape)
         cv2.imwrite(img_path, img)
 
 def DUF_downsample(x, scale=4):
@@ -350,8 +351,8 @@ def set_params():
 
     #filter by area
     params.filterByArea = True
-    params.minArea = 2000
-    params.maxArea = 20000
+    params.minArea = 8000
+    params.maxArea = 50000
 
     params.filterByCircularity = False
     params.filterByConvexity = False
@@ -366,4 +367,12 @@ def draw_keypoints(keypoints,avg_img):
     avg_img = cv2.cvtColor(avg_img,cv2.COLOR_GRAY2RGB)
     for c in keypoints:
         avg_img = cv2.circle(avg_img, np.array(c.pt).astype(np.uint32),15 , (0,0,255) , 15)
+    return avg_img
+
+def draw_keypoints2(keypoints,avg_img,color=(255,0,0),size=15):
+    #avg_img = cv2.cvtColor(avg_img,cv2.COLOR_GRAY2RGB)
+    if torch.is_tensor(keypoints):
+        keypoints=keypoints.numpy()[0]
+    for c in keypoints:
+        avg_img = cv2.circle(avg_img, c.astype(np.uint32),15 , color , size)
     return avg_img
