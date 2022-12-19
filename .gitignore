@@ -132,3 +132,6 @@ results/
 *.npy
 *.sh
 sandbox/
+.vscode/
+*.err
+*.out
