@@ -1,4 +1,4 @@
-name: test_10028_7_3000
+name: test_10028_4_8000
 suffix: ~  # add suffix to saved images
 save_images: True
 model: video_base
@@ -44,9 +44,9 @@ network_G:
   sqrt_frags: 8
 
   #blob detection
-  minArea: 3000
+  minArea: 8000
   minThreshold: 50
-  voting_th: 7
+  voting_th: 4
 
 
 #### path

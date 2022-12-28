@@ -351,7 +351,7 @@ def set_params():
 
     #filter by area
     params.filterByArea = True
-    params.minArea = 8000
+    params.minArea = 6000
     params.maxArea = 50000
 
     params.filterByCircularity = False
