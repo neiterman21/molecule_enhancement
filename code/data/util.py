@@ -60,7 +60,7 @@ class point():
 class moleculeCoords():
     def __init__(self,spamreader = None, kp = None,min_dist=120 ):
         self.points = []
-        self.min_dist = 80 #min_dist
+        self.min_dist = 30 #min_dist
         if spamreader is not None:
             spamreader = spamreader.tolist()
             for row in spamreader[0]:
@@ -117,25 +117,28 @@ class moleculeCoords():
         fp = 0
         hit = 0
         miss = 0
+        false_positive = []
         for p in self.points:
             fake = True
             for i , _ in enumerate(other):
-                if p.is_near(other[i], self.min_dist):
+                if p.is_near(other[i], self.min_dist*3):
                     fake = False
                     hit +=1
                     other.erase(i)
                     break
             if fake:
+                false_positive.append(p)
                 fp +=1
-        
-        return {'hit' : hit , 'miss' : len(other) , 'fp' : fp}
+        mol_false = moleculeCoords()
+        mol_false.points = false_positive
+        return {'hit' : hit , 'miss' : len(other) , 'fp' : fp, 'false_positive' : mol_false}
 
     def merge(self,other_):
         other = other_.copy()
         for p in other.points:
             insert=True
             for i , _ in enumerate(self.points):
-                if p.is_near(self.points[i], int(self.min_dist*1.75)):
+                if p.is_near(self.points[i], int(self.min_dist*3)):
                     insert=False
                     break
             if insert:

@@ -363,16 +363,20 @@ def create_blob_detector():
     params = set_params()
     return cv2.SimpleBlobDetector_create(params)
 
-def draw_keypoints(keypoints,avg_img):
+def draw_keypoints(keypoints,avg_img,color=(255,0,0),size=15):
+    if (avg_img.ndim <3):
+        avg_img = np.expand_dims(avg_img, axis=2)
     avg_img = cv2.cvtColor(avg_img,cv2.COLOR_GRAY2RGB)
     for c in keypoints:
-        avg_img = cv2.circle(avg_img, np.array(c.pt).astype(np.uint32),15 , (0,0,255) , 15)
+        avg_img = cv2.circle(avg_img, np.array(c.pt).astype(np.uint32),size , color , size)
     return avg_img
 
 def draw_keypoints2(keypoints,avg_img,color=(255,0,0),size=15):
-    #avg_img = cv2.cvtColor(avg_img,cv2.COLOR_GRAY2RGB)
+    if (avg_img.ndim <3):
+        avg_img = np.expand_dims(avg_img, axis=2) 
+    cv2.cvtColor(avg_img,cv2.COLOR_GRAY2RGB)
     if torch.is_tensor(keypoints):
         keypoints=keypoints.numpy()[0]
     for c in keypoints:
-        avg_img = cv2.circle(avg_img, c.astype(np.uint32),15 , color , size)
+        avg_img = cv2.circle(avg_img, c.astype(np.uint32),size , color , size)
     return avg_img

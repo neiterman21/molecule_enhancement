@@ -68,6 +68,7 @@ for data in test_loader:
     video_fp = 0  
     gt = moleculeCoords(spamreader = data['GT'])
     from_all = moleculeCoords()
+    all_kps = []
     for i , im in enumerate(sr_img):
         suffix = opt['suffix']
         if suffix:
@@ -78,6 +79,7 @@ for data in test_loader:
             # Save SR images for reference
             sr_img_ = (sr_img[i]*255).astype('uint8')
             keypoints = detector.detect(sr_img_)
+            all_kps += keypoints
             #coords = moleculeCoords(kp=keypoints)
             coords = visuals['coords'][i]
             from_all.merge(coords)
@@ -87,16 +89,22 @@ for data in test_loader:
             video_hit += score['hit']
             video_mis += score['miss']
             video_fp += score['fp']
+            avg_w_bullets = util.draw_keypoints2(data['GT'],avg_img,color=(255,0,0))
             if opt['save_binary']:
                 sr_img_ = util.draw_keypoints(keypoints,sr_img_)
             else:
-                sr_img_ = util.draw_keypoints(keypoints,avg_img)
-            sr_img_ = util.draw_keypoints2(data['GT'],sr_img_)
+                sr_img_ = util.draw_keypoints(keypoints,avg_w_bullets,color=(0,0,255),size=2)
+            
             
             util.save_img(sr_img_, save_img_path,use_PIL=False)
             #avg_post += sr_img_
     #logger.info('\ rates: hit [{:s}] miss [{:s}] fp [{:s}]...'.format(str(video_hit/(video_hit+video_mis)),str(video_mis/(video_hit+video_mis)),str(video_fp/(video_hit+video_mis))))
     #stats taken from all frames
+    ####### Gil debug
+    #avg_w_bullets = util.draw_keypoints2(data['GT'],avg_img)
+    #avg_w_bullets = util.draw_keypoints(all_kps,avg_w_bullets,color=(0,0,255),size=2)
+    #util.save_img(avg_w_bullets, osp.join(image_dir, 'all_bullets.jpg'),use_PIL=False)
+    #######
     score_all = from_all.res_matrix(gt)
     logger.info('from all \hit [{:d}] miss [{:d}] fp [{:d}]...'.format(score_all['hit'],score_all['miss'],score_all['fp']))
     logger.info('from all \ rates: hit [{:.3f}] miss [{:.3f}] fp [{:.3f}]...'.format(score_all['hit']/(score_all['hit']+score_all['miss']),score_all['miss']/(score_all['hit']+score_all['miss']),score_all['fp']/(score_all['hit']+score_all['miss'])))

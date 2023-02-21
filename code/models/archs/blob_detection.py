@@ -1,5 +1,6 @@
 import cv2
 
+
 def set_params(min_area):
     params = cv2.SimpleBlobDetector_Params()
 
