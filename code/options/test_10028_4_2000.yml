@@ -1,4 +1,4 @@
-name: test_all_marked
+name: test_10028_4_2000
 suffix: ~  # add suffix to saved images
 save_images: True
 model: video_base
@@ -6,7 +6,7 @@ distortion: sr
 save_binary: False
 scale: 1
 crop_border: ~  # crop border when evaluation. If None(~), crop the scale pixels
-gpu_ids: [2]
+gpu_ids: [0]
 
 datasets:
 
@@ -18,8 +18,8 @@ datasets:
     #dataroot: /home/evgenyn/scratch/Micrographs_part1/
     dataroot: /home/evgenyn/scratch/micro_cord/ftp.empiar.pdbj.org/archive/10028/data/Micrographs/Micrographs_part1/
     batch_size: 1
-    debug: true
-    debug_imgs: 2
+    debug: false
+    debug_imgs: 5
 
   # test_3:  # the 1st test dataset
   #   name: on8
@@ -44,9 +44,9 @@ network_G:
   sqrt_frags: 8
 
   #blob detection
-  minArea: 6000
+  minArea: 2000
   minThreshold: 50
-  voting_th: 1
+  voting_th: 4
 
 
 #### path
