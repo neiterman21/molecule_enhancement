@@ -6,7 +6,7 @@ import numpy as np
 import csv
 import starfile
 import os
-import starfile
+from skimage.restoration import denoise_nl_means
 
 class MoleculeBlurDataset(data.Dataset):
     def __init__(self, opt):
@@ -36,15 +36,23 @@ class MoleculeBlurDataset(data.Dataset):
         return df.to_numpy()[:,:2]
 
     def __getitem__(self, index):
-        with mrcfile.open(self.paths[index]) as mrc:
+        patch_kw = dict(patch_size=5,patch_distance=6)
+        with mrcfile.mmap(self.paths[index],mode='r') as mrc:
             d = mrc.data/16383
-        if self.opt['data_type'] == 'mrc':
-            d = np.expand_dims(d, axis=0)
+            
+            d = denoise_nl_means(d,h =2, fast_mode=True, **patch_kw)
+            d = d.astype('float32')
+
+        
+        #if self.opt['data_type'] == 'mrc':
+        #    d = np.expand_dims(d, axis=0)
         avg = np.average(d, axis=(0))
         name = self.paths[index].split('/')[-1].split('.')[0]
         ###
         if self.opt['cord_type'] == 'star':
             gt = self.getcords_star(index)
+        elif self.opt['cord_type'] == None:
+            gt = np.zeros(1)
         else:
             gt = self.getcords_coord(index)
         

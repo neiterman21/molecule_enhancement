@@ -31,6 +31,8 @@ def parse(opt_path, is_train=True):
             dataset['dataroot'] = osp.expanduser(dataset['dataroot'])
         if dataset.get('data_type', None) is None:
             dataset['data_type'] = 'mrc'
+        if dataset.get('double_vots', None) is None:
+            dataset['double_vots'] = False
  
     # path
     for key, path in opt['path'].items():

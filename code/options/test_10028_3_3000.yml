@@ -1,9 +1,9 @@
-name: test_10028_3_3000
+name: test_10028_9_3000_large_heavy_debug_save_org
 suffix: ~  # add suffix to saved images
 save_images: True
 model: video_base
 distortion: sr
-save_binary: False
+save_binary: True
 scale: 1
 crop_border: ~  # crop border when evaluation. If None(~), crop the scale pixels
 gpu_ids: [0]
@@ -18,8 +18,8 @@ datasets:
     #dataroot: /home/evgenyn/scratch/Micrographs_part1/
     dataroot: /home/evgenyn/scratch/micro_cord/ftp.empiar.pdbj.org/archive/10028/data/Micrographs/Micrographs_part1/
     batch_size: 1
-    debug: false
-    debug_imgs: 5
+    debug: true
+    debug_imgs: 3
 
   # test_3:  # the 1st test dataset
   #   name: on8
@@ -38,15 +38,15 @@ network_G:
   which_model_G: blur #HyperNet
   conv_size: 101
   th1: 0.1305 # double 0-1
-  patch_mean: 0.82
-  morphology_size: 41 
+  patch_mean: 0.86
+  morphology_size: 25 
   gauss_blur_size: 25
   sqrt_frags: 8
 
   #blob detection
-  minArea: 3000
+  minArea: 1000
   minThreshold: 50
-  voting_th: 3
+  voting_th: 1
 
 
 #### path

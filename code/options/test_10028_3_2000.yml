@@ -1,4 +1,4 @@
-name: test_10028_3_2000
+name: test_10028_11_2000_nlm_denoise
 suffix: ~  # add suffix to saved images
 save_images: True
 model: video_base
@@ -38,7 +38,7 @@ network_G:
   which_model_G: blur #HyperNet
   conv_size: 101
   th1: 0.1305 # double 0-1
-  patch_mean: 0.82
+  patch_mean: 0.86
   morphology_size: 41 
   gauss_blur_size: 25
   sqrt_frags: 8
@@ -46,7 +46,7 @@ network_G:
   #blob detection
   minArea: 2000
   minThreshold: 50
-  voting_th: 3
+  voting_th: 11
 
 
 #### path
