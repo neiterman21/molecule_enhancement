@@ -58,9 +58,9 @@ class point():
         return False
 
 class moleculeCoords():
-    def __init__(self,spamreader = None, kp = None,min_dist=120 ):
+    def __init__(self,spamreader = None, kp = None,min_dist=45 ):
         self.points = []
-        self.min_dist = 30 #min_dist
+        self.min_dist = min_dist
         if spamreader is not None:
             spamreader = spamreader.tolist()
             for row in spamreader[0]:

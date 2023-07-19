@@ -40,12 +40,12 @@ class MoleculeBlurDataset(data.Dataset):
         with mrcfile.mmap(self.paths[index],mode='r') as mrc:
             d = mrc.data/16383
             
-            d = denoise_nl_means(d,h =2, fast_mode=True, **patch_kw)
+           # d = denoise_nl_means(d,h =2, fast_mode=True, **patch_kw)
             d = d.astype('float32')
 
         
-        #if self.opt['data_type'] == 'mrc':
-        #    d = np.expand_dims(d, axis=0)
+        if self.opt['data_type'] == 'mrc':
+            d = np.expand_dims(d, axis=0)
         avg = np.average(d, axis=(0))
         name = self.paths[index].split('/')[-1].split('.')[0]
         ###

@@ -34,26 +34,28 @@ class BlurModel(nn.Module):
         for frame in x[0]:
             coords.append(moleculeCoords(kp=blob_detection.get_blobs(frame,self.opt['minArea'])))
             if self.double_votes: coords_larg.append(moleculeCoords(kp=blob_detection.get_blobs(frame,2*self.opt['minArea'])))
-        for cord_set , cord_set_larg in zip(coords,coords_larg):
+        i=0
+        for cord_set in coords: #, cord_set_larg in zip(coords,coords_larg):
             to_delete = []
             for point in cord_set.points:
                 vote = 0
-                for cord in coords:
-                    
+                for cord in coords:                   
                     if point in cord:
                         vote+=1
                 if self.double_votes:
                     for cord in coords_larg:                   
                         if point in cord:
-                            vote+=2
+                            vote+=1
+                
                 if vote < self.voting_th:
                     to_delete.append(point)
-            cord_set.delete_point_list(to_delete)
+            coords[i].delete_point_list(to_delete)
+            i+=1
         return coords
     
     def forward(self, x):
         N ,c , h, w = x.shape
-        #x = F.conv2d(x.view(-1,1,h,w), self.blur_k , padding='same').view(N,c,h,w)
+        x = F.conv2d(x.view(-1,1,h,w), self.blur_k , padding='same').view(N,c,h,w)
         output = F.unfold(x, kernel_size=int(h/self.sqrt_frags), stride=int(h/self.sqrt_frags)) 
         output = output.view(N,  int(h/self.sqrt_frags), int(w/self.sqrt_frags),c*(self.sqrt_frags**2),)
         output = output.permute(0, 3, 1, 2)

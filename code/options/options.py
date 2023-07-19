@@ -15,7 +15,7 @@ def parse(opt_path, is_train=True):
     if opt['gpu_ids'] != None:
         gpu_list = ','.join(str(x) for x in opt['gpu_ids'])
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_list
-    print('export CUDA_VISIBLE_DEVICES=' + gpu_list)
+    #print('export CUDA_VISIBLE_DEVICES=' + gpu_list)
 
     opt['is_train'] = is_train
     if opt['distortion'] == 'sr':
@@ -71,6 +71,8 @@ def parse(opt_path, is_train=True):
             opt['logger']['wandb']['id'] = opt['name']
     else:
         opt['logger']['wandb'] = None
+    if opt.get('save_res', None) is None: 
+        opt['save_res'] = False
     return opt
 
 
