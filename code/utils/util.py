@@ -363,12 +363,33 @@ def create_blob_detector():
     params = set_params()
     return cv2.SimpleBlobDetector_create(params)
 
-def draw_keypoints2(keypoints,avg_img,color=(255,0,0),size=15):
+def draw_keypoints2(keypoints,avg_img,color=(255,0,0),size=15, rec = False):
     if (avg_img.ndim <3):
         avg_img = np.expand_dims(avg_img, axis=2) 
         avg_img = cv2.cvtColor(avg_img,cv2.COLOR_GRAY2RGB)
     if torch.is_tensor(keypoints):
         keypoints=keypoints.numpy()[0]
-    for c in keypoints:
-        avg_img = cv2.circle(avg_img, c.astype(np.uint32),size , color , size)
+    for c in keypoints:    
+        if rec:
+            start_point = (c.astype(np.uint32)[0]-80, c.astype(np.uint32)[1]-80)
+            end_point = (c.astype(np.uint32)[0]+80, c.astype(np.uint32)[1]+80)
+            avg_img = cv2.rectangle(avg_img, start_point, end_point, color, 3)
+        else:
+            avg_img = cv2.circle(avg_img, c.astype(np.uint32),size , color , size)
     return avg_img
+
+def save_star(coords,save_img_path):
+    start = '# version 30001 \n\
+    \n\
+    data_\n\
+    \n\
+    loop_ \n\
+    _rlnCoordinateX #1 \n\
+    _rlnCoordinateY #2 \n\
+    _rlnAutopickFigureOfMerit #3 \n\
+    _rlnClassNumber #4 \n\
+    _rlnAnglePsi #5 \n'
+    with open(save_img_path, 'w') as f:
+        f.write(start)
+        for c in coords.to_numpy():
+            f.writelines(" %d\t%d\t0\t\t0\t0\n"%(c[0].astype(np.uint32),c[1].astype(np.uint32)))

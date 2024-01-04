@@ -107,6 +107,11 @@ class VideoBaseModel(BaseModel):
 
     def feed_data(self, data, need_GT=False):
         self.var_L = data['video'].to(self.device)
+        self.ctf_params  = None
+        self.ctf_params = data['ctf'].to(self.device)
+        if 'ctf' in data.keys():
+            print('setting ctf')
+            self.ctf_params = data['ctf'].to(self.device)
         if need_GT:
             self.real_H = data['GT'].to(self.device)
 
@@ -131,7 +136,10 @@ class VideoBaseModel(BaseModel):
     def test(self):
         self.netG.eval()
         with torch.no_grad():
-            self.fake_H = self.netG(self.var_L)
+            if self.ctf_params is None:
+                self.fake_H = self.netG(self.var_L)
+            else:
+                self.fake_H = self.netG(self.var_L,self.ctf_params)
         self.netG.train()
 
     def get_current_log(self):

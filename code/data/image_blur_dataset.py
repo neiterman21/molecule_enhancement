@@ -7,6 +7,7 @@ import csv
 import starfile
 import os
 from skimage.restoration import denoise_nl_means
+import re
 
 class MoleculeBlurDataset(data.Dataset):
     def __init__(self, opt):
@@ -15,6 +16,7 @@ class MoleculeBlurDataset(data.Dataset):
         self.paths = util.get_image_paths( opt['dataroot'],opt['data_type'])
         if (opt['debug']):
             self.paths = self.paths[:opt['debug_imgs']]
+        #self.paths = self.paths[600:]
         #print(self.paths)
 
     def __len__(self):
@@ -28,12 +30,36 @@ class MoleculeBlurDataset(data.Dataset):
             for row in spamreader:
                 points.append((int(row[0]) , int(row[1])))
         return np.asarray(points)
+    
+    def extract_digits(self,s):
+        import re
+        match = re.match(r'(\d{3,4})', s)
+        return match.group(1) if match else ''
 
     def getcords_star(self, index):
         name = self.paths[index].split('/')[-1].split('.')[0]
-        cord_file_path = name[:3] + "_autopick.star"
+        cord_file_path = self.extract_digits(name) + "_autopick.star"
         df = starfile.read(os.path.join(os.path.dirname(self.paths[index]), cord_file_path))
         return df.to_numpy()[:,:2]
+    
+    def get_ctf_params(self,index):
+        name = self.paths[index].split('/')[-1].split('.')[0]
+        ctf_file_name = self.extract_digits(name) + "_ctffind3.log"
+        ctf_file_path = os.path.join(os.path.dirname(self.paths[index]), ctf_file_name)
+        with open(ctf_file_path, 'r') as file:
+            for line in file:
+                # Check if the line contains 'Final Values'
+                if 'Final Values' in line:
+                    # Use regular expression to extract numbers
+                    numbers = re.findall(r"[-+]?\d*\.\d+|\d+", line)
+
+                    # Extract the first three numbers and convert to float
+                    if len(numbers) >= 3:
+                        DefocusU, DefocusV , DefocusAngle = map(float, numbers[:3])
+                        break  # Stop reading further as we found the relevant line
+        
+        return np.array([DefocusU/10, DefocusV , np.radians(DefocusAngle)],dtype='f')
+
 
     def __getitem__(self, index):
         patch_kw = dict(patch_size=5,patch_distance=6)
@@ -56,4 +82,5 @@ class MoleculeBlurDataset(data.Dataset):
         else:
             gt = self.getcords_coord(index)
         
-        return {'video' : d, 'avg' : avg, 'name' : name , 'GT' : gt }
+        ctf_params = self.get_ctf_params(index)
+        return {'video' : d, 'avg' : avg, 'name' : name , 'GT' : gt, 'ctf':  ctf_params}

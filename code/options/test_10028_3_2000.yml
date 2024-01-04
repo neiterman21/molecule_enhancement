@@ -1,4 +1,4 @@
-name: test_10028_11_2000_nlm_denoise
+name: test_10028_3_3000
 suffix: ~  # add suffix to saved images
 save_images: True
 model: video_base
@@ -44,9 +44,9 @@ network_G:
   sqrt_frags: 8
 
   #blob detection
-  minArea: 2000
+  minArea: 3000
   minThreshold: 50
-  voting_th: 11
+  voting_th: 3
 
 
 #### path

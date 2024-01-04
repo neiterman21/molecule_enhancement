@@ -7,6 +7,7 @@ import scipy
 import numpy as np
 import sys
 import models.archs.blob_detection as blob_detection
+import models.archs.ctf_corection_pytorch as ctf_corect
 from  data.util import moleculeCoords
 from  scipy.ndimage import minimum_filter
         
@@ -26,6 +27,12 @@ class BlurModel(nn.Module):
         self.voting_th = self.opt['voting_th']
         self.frame_patches = [0,1,2,3,4,5,6,7,8,15,16,23,24,31,32,39,40,47,48,55,56,57,58,59,60,61,62,63]
         self.double_votes = self.opt['double_vots']
+
+        self.Cs = torch.tensor(2.0).cuda()  # In mm
+        self.pixA = torch.tensor(1.34).cuda()  # In Angstrom
+        self.AmplitudeContrast = torch.tensor(0.07).cuda()
+        self.voltage = torch.tensor(300).cuda()
+        self.n = torch.tensor((4096,4096)).cuda()
 
     def get_blobs(self,x):
         x = (x.data.numpy()*255).astype('uint8')
@@ -53,7 +60,15 @@ class BlurModel(nn.Module):
             i+=1
         return coords
     
-    def forward(self, x):
+    def corect_ctf(self,x,ctf_params):
+        N ,c , h, w = x.shape
+        for i in range(c):
+            x[0,i] = ctf_corect.phase_flip(x[0,i], torch.tensor((h,w),device=x.device), self.voltage, ctf_params[0,0], ctf_params[0,1], ctf_params[0,2], self.Cs, self.pixA, self.AmplitudeContrast)**2
+        return x
+
+    def forward(self, x , ctf_params=None):
+        if ctf_params is not None:
+            x = self.corect_ctf(x,ctf_params)
         N ,c , h, w = x.shape
         x = F.conv2d(x.view(-1,1,h,w), self.blur_k , padding='same').view(N,c,h,w)
         output = F.unfold(x, kernel_size=int(h/self.sqrt_frags), stride=int(h/self.sqrt_frags)) 

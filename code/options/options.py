@@ -62,6 +62,12 @@ def parse(opt_path, is_train=True):
     # network
     if opt['distortion'] == 'sr':
         opt['network_G']['scale'] = scale
+    
+    if opt.get('save_res', None) is None: 
+        opt['save_res'] = False
+    
+    if opt.get('save_star', None) is None: 
+        opt['save_star'] = True
 
     if not is_train: return opt #on test we dont need wandb
     #wandb
@@ -71,8 +77,7 @@ def parse(opt_path, is_train=True):
             opt['logger']['wandb']['id'] = opt['name']
     else:
         opt['logger']['wandb'] = None
-    if opt.get('save_res', None) is None: 
-        opt['save_res'] = False
+    
     return opt
 
 
