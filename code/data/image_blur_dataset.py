@@ -16,6 +16,14 @@ class MoleculeBlurDataset(data.Dataset):
         self.paths = util.get_image_paths( opt['dataroot'],opt['data_type'])
         if (opt['debug']):
             self.paths = self.paths[:opt['debug_imgs']]
+
+        pattern = r'^\d{4}'
+        path_less = []
+        for file in self.paths:
+           if re.match(pattern, os.path.basename(file)):
+               path_less.append(file)
+        self.paths = [elem for elem in self.paths if elem not in path_less]
+
         #self.paths = self.paths[600:]
         #print(self.paths)
 

@@ -10,7 +10,7 @@ import models.archs.blob_detection as blob_detection
 import models.archs.ctf_corection_pytorch as ctf_corect
 from  data.util import moleculeCoords
 from  scipy.ndimage import minimum_filter
-        
+from models.archs.arch_utils import *
 
 class BlurModel(nn.Module):
     
@@ -21,7 +21,7 @@ class BlurModel(nn.Module):
         #self.detector = blob_detection.create_blob_detector(self.opt['minArea'])
         self.th1 = self.opt['th1']
         self.mean = self.opt['patch_mean']
-        self.maxPull = nn.MaxPool2d(self.opt['morphology_size'],stride=1,padding=int(self.opt['morphology_size']/2))
+        self.maxPull = nn.MaxPool2d(self.opt['morphology_size'],stride=1,padding=int((self.opt['morphology_size'])/2))
         self.minPull = self.min_pool
         self.sqrt_frags = self.opt['sqrt_frags']
         self.voting_th = self.opt['voting_th']
@@ -65,17 +65,68 @@ class BlurModel(nn.Module):
         for i in range(c):
             x[0,i] = ctf_corect.phase_flip(x[0,i], torch.tensor((h,w),device=x.device), self.voltage, ctf_params[0,0], ctf_params[0,1], ctf_params[0,2], self.Cs, self.pixA, self.AmplitudeContrast)**2
         return x
+    
+    def image_to_patches(self,image, patch_height, patch_width):
+        """
+        Convert a 3D image tensor to a 4D tensor of single-channel patches.
+
+        Args:
+        image (torch.Tensor): The image tensor of shape (C, H, W).
+        patch_height (int): The height of each patch.
+        patch_width (int): The width of each patch.
+
+        Returns:
+        torch.Tensor: A 4D tensor of shape (num_patches, C, patch_height, patch_width).
+        """
+        N,C, H, W = image.shape
+
+        # Reshape into a 5D tensor of (C, num_patches_height, patch_height, num_patches_width, patch_width)
+        patches = image[0].unfold(1, patch_height, patch_height).unfold(2, patch_width, patch_width)
+        
+        # Reshape into a 4D tensor where each patch is separated and channel is second dimension
+        patches = patches.contiguous().view(-1, 1, patch_height, patch_width)
+
+        return patches
+
+    def patches_to_image(self,patches, original_shape, patch_height, patch_width):
+        """
+        Reconstruct the original image from its patches.
+
+        Args:
+        patches (torch.Tensor): The 4D tensor of patches.
+        original_shape (tuple): The shape of the original image (C, H, W).
+        patch_height (int): The height of each patch.
+        patch_width (int): The width of each patch.
+
+        Returns:
+        torch.Tensor: The reconstructed image of shape (C, H, W).
+        """
+        C, H, W = original_shape
+        # Calculate how many patches there are along each dimension
+        num_patches_height = H // patch_height
+        num_patches_width = W // patch_width
+
+        # Reshape the patches tensor to a 5D tensor before folding
+        patches_reshaped = patches.view(C, num_patches_height, num_patches_width, patch_height, patch_width)
+
+        # Fold the patches back into the original image shape
+        reconstructed = patches_reshaped.permute(0, 1, 3, 2, 4).contiguous()
+        reconstructed = reconstructed.view(1,C, H, W)
+
+        return reconstructed
 
     def forward(self, x , ctf_params=None):
         if ctf_params is not None:
             x = self.corect_ctf(x,ctf_params)
         N ,c , h, w = x.shape
         x = F.conv2d(x.view(-1,1,h,w), self.blur_k , padding='same').view(N,c,h,w)
-        output = F.unfold(x, kernel_size=int(h/self.sqrt_frags), stride=int(h/self.sqrt_frags)) 
-        output = output.view(N,  int(h/self.sqrt_frags), int(w/self.sqrt_frags),c*(self.sqrt_frags**2),)
-        output = output.permute(0, 3, 1, 2)
-        for i in range(self.sqrt_frags**2):
-            if i in self.frame_patches:
+        #save_tensor_as_image(x[0,0], 'frame0_conved.png')
+        #output = F.unfold(x, kernel_size=int(h/self.sqrt_frags), stride=int(h/self.sqrt_frags)) 
+        #output = output.view(N,  int(h/self.sqrt_frags), int(w/self.sqrt_frags),c*(self.sqrt_frags**2),)
+        output = self.image_to_patches(x,int(h/self.sqrt_frags),int(h/self.sqrt_frags))
+        output = output.permute(1, 0, 2, 3)
+        for i in range(c*self.sqrt_frags**2):
+            if i in self.frame_patches and False:
                 f_bias = 0.05
             else:
                 f_bias = 0
@@ -89,14 +140,19 @@ class BlurModel(nn.Module):
                 self.th1 = self.th1+0.00005
                 threashed = torch.where(output[0,i] > self.th1, 1. , 0.)
             output[0,i] = threashed
-        output = output.permute(0, 2, 3, 1)
-        output = output.view(1,-1,self.sqrt_frags**2)
-        output = F.fold(output, kernel_size=int(h/self.sqrt_frags),stride=int(h/self.sqrt_frags) ,output_size=(h,w))
-
+        output = output.permute(1, 0, 2, 3)
+        output = self.patches_to_image(output,(c , h, w),int(h/self.sqrt_frags),int(h/self.sqrt_frags))
+        #output = output.view(1,-1,self.sqrt_frags**2)
+        #output = F.fold(output, kernel_size=int(h/self.sqrt_frags),stride=int(h/self.sqrt_frags) ,output_size=(h,w))
+        #save_tensor_as_image(output[0,0], 'frame0_threshed.png')
+        #save_tensor_as_image(output[0,1], 'frame1_threshed.png')
+        #save_tensor_as_image(output[0,2], 'frame2_threshed.png')
         output = self.minPull(self.maxPull(output)).type(torch.cuda.DoubleTensor)
         cordes = self.get_blobs(output.clone().cpu())
         #self.find_min(conved.clone().cpu())
-        
+        #save_tensor_as_image(output[0,0], 'frame0_morfed.png')
+        #save_tensor_as_image(output[0,1], 'frame1_morfed.png')
+        #save_tensor_as_image(output[0,2], 'frame2_morfed.png')
         return output , cordes
 
     def min_pool(self,x):

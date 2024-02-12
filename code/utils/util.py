@@ -393,3 +393,16 @@ def save_star(coords,save_img_path):
         f.write(start)
         for c in coords.to_numpy():
             f.writelines(" %d\t%d\t0\t\t0\t0\n"%(c[0].astype(np.uint32),c[1].astype(np.uint32)))
+
+
+def calculate_metrics(TP, FP, FN):
+    # Calculating Precision
+    precision = TP / float(TP + FP) if TP + FP != 0 else 0
+
+    # Calculating Recall
+    recall = TP / float(TP + FN) if TP + FN != 0 else 0
+
+    # Calculating F1 Score
+    f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall != 0 else 0
+
+    return precision, recall, f1_score

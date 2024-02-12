@@ -98,22 +98,23 @@ for data in test_loader:
             video_hit += score['hit']
             video_mis += score['miss']
             video_fp += score['fp']
-            avg_w_bullets = util.draw_keypoints2(data['GT'],avg_img,color=(255,0,0))
+            if opt['save_res']:
+                avg_w_bullets = util.draw_keypoints2(data['GT'],avg_img,color=(255,0,0))
         else:
             avg_w_bullets = avg_img.copy()
-        
-        if opt['save_binary'] :  
-            if need_gt:       
-                sr_img_ = util.draw_keypoints2(data['GT'],sr_img_)
-                #org_frame = util.draw_keypoints2(data['GT'],org_frame)
-            sr_img_ = util.draw_keypoints2(coords.to_numpy(),sr_img_,color=(0,0,255),size=8,rec=True)
-            org_frame = util.draw_keypoints2(coords.to_numpy(),org_frame,color=(0,0,255),size=8,rec=True)
-            if i != 0 :
-                org_frame_i = util.draw_keypoints2(coords.to_numpy(),org_frame_i,color=(255,0,0),size=8,rec=True)
-                
+        if opt['save_res']:
+            if opt['save_binary'] :  
+                if need_gt:       
+                    sr_img_ = util.draw_keypoints2(data['GT'],sr_img_,color=(255,0,0))
+                    org_frame = util.draw_keypoints2(data['GT'],org_frame)
+                sr_img_ = util.draw_keypoints2(coords.to_numpy(),sr_img_,color=(0,0,255),size=8,rec=True)
+                #org_frame = util.draw_keypoints2(coords.to_numpy(),org_frame,color=(0,0,255),size=8,rec=True)
+                if i != 0 :
+                    org_frame_i = util.draw_keypoints2(coords.to_numpy(),org_frame_i,color=(0,0,255),size=8,rec=True)
+                    
 
-        else:
-            sr_img_ = util.draw_keypoints2(coords.to_numpy(),avg_w_bullets,color=(0,0,255),size=12,rec=True)
+            else:
+                sr_img_ = util.draw_keypoints2(coords.to_numpy(),avg_w_bullets,color=(0,0,255),size=12,rec=True)
         
         if opt['save_res']:
             util.save_img(sr_img_.astype('uint8'), save_img_path,use_PIL=False)
@@ -153,5 +154,7 @@ for data in test_loader:
 if need_gt:
     logger.info('Total hit [{:d}] miss [{:d}] fp [{:d}]...'.format(hit,mis,fp))
     logger.info('Total rates ' + opt['name'] + ': hit [{:.3f}] miss [{:.3f}] fp [{:.3f}]...'.format(hit/(hit+mis),mis/(hit+mis),fp/(hit+mis)))
+    precision, recall, f1_score = util.calculate_metrics(hit,fp,mis)
+    logger.info(opt['name'] + ' metric scores: precision [{:4f}] recall [{:4f}] f1_score [{:4f}]...'.format(precision, recall, f1_score))
     #avg_post /= len(sr_img)
     #util.save_img(avg_img, osp.join(image_dir, 'avg_post.jpg'))

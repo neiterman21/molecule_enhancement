@@ -110,7 +110,6 @@ class VideoBaseModel(BaseModel):
         self.ctf_params  = None
         self.ctf_params = data['ctf'].to(self.device)
         if 'ctf' in data.keys():
-            print('setting ctf')
             self.ctf_params = data['ctf'].to(self.device)
         if need_GT:
             self.real_H = data['GT'].to(self.device)
