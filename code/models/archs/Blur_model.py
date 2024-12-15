@@ -126,7 +126,7 @@ class BlurModel(nn.Module):
         output = self.image_to_patches(x,int(h/self.sqrt_frags),int(h/self.sqrt_frags))
         output = output.permute(1, 0, 2, 3)
         for i in range(c*self.sqrt_frags**2):
-            if i in self.frame_patches and False:
+            if i in self.frame_patches:
                 f_bias = 0.05
             else:
                 f_bias = 0
@@ -136,8 +136,8 @@ class BlurModel(nn.Module):
                 self.th1 = self.th1-0.00005
                 threashed = torch.where(output[0,i] > self.th1, 1. , 0.)
                 #print("increasing mean:" ,  torch.mean(torch.mean(threashed)), 'self.th1:',self.th1)
-            while(torch.mean(threashed) > self.mean - 0.02 -f_bias):
-                self.th1 = self.th1+0.00005
+            while(torch.mean(threashed) > self.mean - 0.02 ):
+                self.th1 = self.th1+0.000005
                 threashed = torch.where(output[0,i] > self.th1, 1. , 0.)
             output[0,i] = threashed
         output = output.permute(1, 0, 2, 3)

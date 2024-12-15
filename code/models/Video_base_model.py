@@ -108,7 +108,6 @@ class VideoBaseModel(BaseModel):
     def feed_data(self, data, need_GT=False):
         self.var_L = data['video'].to(self.device)
         self.ctf_params  = None
-        self.ctf_params = data['ctf'].to(self.device)
         if 'ctf' in data.keys():
             self.ctf_params = data['ctf'].to(self.device)
         if need_GT:

@@ -17,11 +17,15 @@ class MoleculeBlurDataset(data.Dataset):
         if (opt['debug']):
             self.paths = self.paths[:opt['debug_imgs']]
 
-        pattern = r'^\d{4}'
+        #pattern = r'^\d{4}'
+        no_gt = [600,597,586,598,594,596,589,592,588,595,590,599,593,587,591]
         path_less = []
-        for file in self.paths:
-           if re.match(pattern, os.path.basename(file)):
-               path_less.append(file)
+        #for file in self.paths:
+            #if re.match(pattern, os.path.basename(file)):
+            #    path_less.append(file)
+        #    if int(os.path.basename(file)[:3]) in no_gt:
+        #        path_less.append(file)
+            
         self.paths = [elem for elem in self.paths if elem not in path_less]
 
         #self.paths = self.paths[600:]
@@ -46,9 +50,11 @@ class MoleculeBlurDataset(data.Dataset):
 
     def getcords_star(self, index):
         name = self.paths[index].split('/')[-1].split('.')[0]
-        cord_file_path = self.extract_digits(name) + "_autopick.star"
+        cord_file_path = name + ".star"
+        #cord_file_path = self.extract_digits(name) + "_autopick.star"
+        #print(os.path.join(os.path.dirname(self.paths[index]), cord_file_path))
         df = starfile.read(os.path.join(os.path.dirname(self.paths[index]), cord_file_path))
-        return df.to_numpy()[:,:2]
+        return df.to_numpy()[:,2:4].astype(np.float32)
     
     def get_ctf_params(self,index):
         name = self.paths[index].split('/')[-1].split('.')[0]
@@ -70,14 +76,10 @@ class MoleculeBlurDataset(data.Dataset):
 
 
     def __getitem__(self, index):
-        patch_kw = dict(patch_size=5,patch_distance=6)
         with mrcfile.mmap(self.paths[index],mode='r') as mrc:
-            d = mrc.data/16383
-            
-           # d = denoise_nl_means(d,h =2, fast_mode=True, **patch_kw)
+            d = mrc.data/16#383    
             d = d.astype('float32')
 
-        
         if self.opt['data_type'] == 'mrc':
             d = np.expand_dims(d, axis=0)
         avg = np.average(d, axis=(0))
@@ -89,6 +91,9 @@ class MoleculeBlurDataset(data.Dataset):
             gt = np.zeros(1)
         else:
             gt = self.getcords_coord(index)
-        
-        ctf_params = self.get_ctf_params(index)
-        return {'video' : d, 'avg' : avg, 'name' : name , 'GT' : gt, 'ctf':  ctf_params}
+        ctf_params = None
+        #ctf_params = self.get_ctf_params(index)
+        #print(gt,type(gt))
+        output = {'video' : d , 'avg' : avg ,'GT' : gt ,'name' : name }# , 'ctf':  ctf_params}
+  
+        return output

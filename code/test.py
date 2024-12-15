@@ -46,6 +46,7 @@ hit = 0
 mis = 0
 fp = 0
 need_gt = True
+dict_frame_list = [{'hit': 0, 'fp': 0} for _ in range(16)]
 for data in test_loader:
     #if data['GT'] == np.zeros(1):
     need_gt = True
@@ -98,6 +99,10 @@ for data in test_loader:
             video_hit += score['hit']
             video_mis += score['miss']
             video_fp += score['fp']
+
+            dict_frame_list[i]['hit'] += score['hit']
+            dict_frame_list[i]['fp'] += score['fp']
+
             if opt['save_res']:
                 avg_w_bullets = util.draw_keypoints2(data['GT'],avg_img,color=(255,0,0))
         else:
@@ -156,5 +161,6 @@ if need_gt:
     logger.info('Total rates ' + opt['name'] + ': hit [{:.3f}] miss [{:.3f}] fp [{:.3f}]...'.format(hit/(hit+mis),mis/(hit+mis),fp/(hit+mis)))
     precision, recall, f1_score = util.calculate_metrics(hit,fp,mis)
     logger.info(opt['name'] + ' metric scores: precision [{:4f}] recall [{:4f}] f1_score [{:4f}]...'.format(precision, recall, f1_score))
+    logger.info(dict_frame_list)
     #avg_post /= len(sr_img)
     #util.save_img(avg_img, osp.join(image_dir, 'avg_post.jpg'))
